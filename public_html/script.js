@@ -756,6 +756,8 @@ function refreshSelected() {
 	}
         
         $('#selected_sitedist').text(format_distance_long(selected.sitedist));
+        $('#selected_Az').text(selected.Az);
+        $('#selected_El').text(selected.El);  // TODO: Dragonyzl 
         $('#selected_rssi').text(selected.rssi.toFixed(1) + ' dBFS');
 }
 
@@ -796,7 +798,7 @@ function refreshTableInfo() {
                         tableplane.tr.cells[3].textContent = (tableplane.squawk !== null ? tableplane.squawk : "");
                         tableplane.tr.cells[4].textContent = format_altitude_brief(tableplane.altitude, tableplane.vert_rate);
                         tableplane.tr.cells[5].textContent = format_speed_brief(tableplane.speed);
-                        tableplane.tr.cells[6].textContent = format_distance_brief(tableplane.sitedist);
+                        tableplane.tr.cells[6].textContent = format_distance_brief(tableplane.sitedist);  
                         tableplane.tr.cells[7].textContent = format_track_brief(tableplane.track);
                         tableplane.tr.cells[8].textContent = tableplane.messages;
                         tableplane.tr.cells[9].textContent = tableplane.seen.toFixed(0);

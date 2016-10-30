@@ -425,6 +425,7 @@ static void updatePosition(struct aircraft *a, struct modesMessage *mm, uint64_t
     double new_lat = 0, new_lon = 0;
     unsigned new_nuc = 0;
     int surface;
+    double ELLIPSOID[2] = { 6.378137e6, 8.181919084262149e-02 };
 
     surface = (mm->cpr_type == CPR_SURFACE);
 
@@ -508,7 +509,19 @@ static void updatePosition(struct aircraft *a, struct modesMessage *mm, uint64_t
         a->pos_nuc = new_nuc;
 
         update_range_histogram(new_lat, new_lon);
-    }
+	// obtain the a->Range, a->Azimuth, a->Elvation. //  Dragonyzl 20161014
+	float h ;
+	if (Modes.use_gnss && trackDataValid(&a->altitude_gnss_valid)) {
+               h = (float)convert_altitude(a->altitude_gnss);
+        } else if (trackDataValid(&a->altitude_valid)) {
+               h = (float)convert_altitude(a->altitude);
+	       elevation (Modes.fUserLat, Modes.fUserLon, Modes.fUserHeight, a->lat, a->lon, h, ELLIPSOID, &(a->Azimuth), &(a->Elvation), &(a->Range) );
+		   //  TODO: Send the aircraft info using UDP Multicast. Dragonyzl 20161029
+			if(Modes.net)   SendUDP(a);
+	       }
+	// obtain the a->Range, a->Azimuth, a->Elvation. //  Dragonyzl 20161014
+
+	}
 }
 
 //
@@ -810,4 +823,14 @@ void trackPeriodicUpdate()
         trackRemoveStaleAircraft(now);
         trackUpdateAircraftModeS();
     }
+}
+
+
+void SendUDP(struct aircraft *a)
+{
+	char recmsg[MODES_OUT_BUF_SIZE];
+	uint64_t now = mstime();
+	memset(recmsg,0,strlen(recmsg));
+	sprintf(recmsg,"%06x\t%d\t%7.3f\t%7.3f\t%10.3f\n",a->addr,now, a->Azimuth,a->Elvation,a->Range/1000.);
+	if (sendto  (Modes.sockfd, recmsg, strlen (recmsg), 0,   (struct sockaddr *) &Modes.peeraddr, sizeof (struct sockaddr_in)) < 0)	{	  printf ("sendto error!/n");	  exit (3);	}
 }

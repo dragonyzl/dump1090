@@ -78,15 +78,21 @@
     #include <sys/ioctl.h>
     #include <time.h>
     #include <limits.h>
+   #include <sys/socket.h>
+   #include <arpa/inet.h>
 #else
-    #include "winstubs.h" //Put everything Windows specific in here
+//    #include "winstubs.h" //Put everything Windows specific in here
+	#include "AER.h"
+	#include "rtl-sdr.h"
+	#include "anet.h"
 #endif
 
 #include "compat/compat.h"
 
 // Avoid a dependency on rtl-sdr except where it's really needed.
+#ifndef _WIN32
 typedef struct rtlsdr_dev rtlsdr_dev_t;
-
+#endif
 // ============================= #defines ===============================
 
 #define MODES_DEFAULT_PPM          52
@@ -361,8 +367,25 @@ struct {                             // Internal state
     // User details
     double fUserLat;                // Users receiver/antenna lat/lon needed for initial surface location
     double fUserLon;                // Users receiver/antenna lat/lon needed for initial surface location
+    double fUserHeight;                // Users receiver/antenna Altitude needed for AER caculation  // Dragonyzl
     int    bUserFlags;              // Flags relating to the user details
+    char   pathname[1024];
+    FILE*  RecordFile;
+    int RecordFlag;
+    uint64_t TimeIndex;
+    float Range_max;
+    float Range_min;
+    float Az_Start;   // for display the airplanes in defined sector
+    float Az_Stop;
+    float El_Start;
+    float El_Stop;   // for display the airplanes in defieed sector  Dragon Yang
+	enum SortType{RANGE,AZIMUTH,ELVATION} SortBy;
     double maxRange;                // Absolute maximum decoding range, in *metres*
+	int sockfd;   // using udp mutlticast to send the airplane's RAE to the local network. Dragonyzl 20161029
+	struct sockaddr_in peeraddr, myaddr;
+
+	
+
 
     // State tracking
     struct aircraft *aircrafts;

@@ -8,7 +8,7 @@
 // -- Title Settings --------------------------------------
 // Show number of aircraft and/or messages per second in the page title
 PlaneCountInTitle = true;
-MessageRateInTitle = false;
+MessageRateInTitle = true;
 
 // -- Output Settings -------------------------------------
 // Show metric values
@@ -17,7 +17,7 @@ MessageRateInTitle = false;
 // and in the detailed plane info. If ShowOtherUnits is true,
 // then the other unit will also be shown in the detailed plane
 // info.
-Metric = false;
+Metric = true;
 ShowOtherUnits = true;
 
 // -- Map settings ----------------------------------------
@@ -34,7 +34,7 @@ DefaultZoomLvl   = 7;
 // Center marker. If dump1090 provides a receiver location,
 // that location is used and these settings are ignored.
 
-SiteShow    = false;           // true to show a center marker
+SiteShow    = true;           // true to show a center marker
 SiteLat     = 45.0;            // position of the marker
 SiteLon     = 9.0;
 SiteName    = "My Radar Site"; // tooltip of the marker
@@ -99,7 +99,7 @@ OutlineMlatColor = '#4040FF';
 
 SiteCircles = true; // true to show circles (only shown if the center marker is shown)
 // In nautical miles or km (depending settings value 'Metric')
-SiteCirclesDistances = new Array(100,150,200);
+SiteCirclesDistances = new Array(50,100,150,200);
 
 // Show the clocks at the top of the righthand pane? You can disable the clocks if you want here
 ShowClocks = true;

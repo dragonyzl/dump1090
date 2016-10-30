@@ -146,6 +146,9 @@ static void convert_sc16_generic(void *iq_data,
     int16_t I, Q;
     float fI, fQ, magsq;
 
+#ifdef _WIN32 // Only for windows on x86
+#define le16toh(x) (x)
+#endif
     for (i = 0; i < nsamples; ++i) {
         I = (int16_t)le16toh(*in++);
         Q = (int16_t)le16toh(*in++);
@@ -191,7 +194,7 @@ static void convert_sc16q11_generic(void *iq_data,
     float fI, fQ, magsq;
 
     for (i = 0; i < nsamples; ++i) {
-        I = (int16_t)le16toh(*in++);
+        I = (int16_t)le16toh(*in++); 
         Q = (int16_t)le16toh(*in++);
         fI = I / 2048.0;
         fQ = Q / 2048.0;

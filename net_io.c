@@ -51,9 +51,9 @@
 
 /* for PRIX64 */
 #include <inttypes.h>
-
+#include <stdlib.h>
 #include <assert.h>
-
+#define _MAX_PATH 260   // Dragonyzl 20161020
 //
 // ============================= Networking =============================
 //
@@ -241,8 +241,9 @@ struct net_service *makeFatsvOutputService(void)
 
 void modesInitNet(void) {
     struct net_service *s;
-
+#ifndef _WIN32
     signal(SIGPIPE, SIG_IGN);
+#endif
     Modes.clients = NULL;
     Modes.services = NULL;
 
@@ -1052,8 +1053,17 @@ char *generateAircraftJson(const char *url_path, int *len) {
         if (trackDataValid(&a->airground_valid) && a->airground_valid.source >= SOURCE_MODE_S_CHECKED && a->airground == AG_GROUND)
             p += snprintf(p, end-p, ",\"altitude\":\"ground\"");
         else if (trackDataValid(&a->altitude_valid))
+	{
             p += snprintf(p, end-p, ",\"altitude\":%d", a->altitude);
-        if (trackDataValid(&a->vert_rate_valid))
+// Maybe the info about R A E should be generated here
+ 	    if(trackDataValid(&a->position_valid)){
+            p += snprintf(p, end-p, ",\"siteRange\":%.2f", a->Range);
+            p += snprintf(p, end-p, ",\"Az\":%.2f", a->Azimuth);
+            p += snprintf(p, end-p, ",\"El\":%.2f", a->Elvation);
+ 	    }
+//=============================  Dragon Yang 20161013========
+    	}
+	if (trackDataValid(&a->vert_rate_valid))
             p += snprintf(p, end-p, ",\"vert_rate\":%d", a->vert_rate);
         if (trackDataValid(&a->heading_valid))
             p += snprintf(p, end-p, ",\"track\":%d", a->heading);
@@ -1061,6 +1071,11 @@ char *generateAircraftJson(const char *url_path, int *len) {
             p += snprintf(p, end-p, ",\"speed\":%d", a->speed);
         if (trackDataValid(&a->category_valid))
             p += snprintf(p, end-p, ",\"category\":\"%02X\"", a->category);
+	
+
+
+
+
 
         p += snprintf(p, end-p, ",\"mlat\":");
         p = append_flags(p, end, a, SOURCE_MLAT);

@@ -49,7 +49,7 @@
 
 #ifndef DUMP1090_TRACK_H
 #define DUMP1090_TRACK_H
-
+#include "interactive.h"
 /* Maximum age of tracked aircraft in milliseconds */
 #define TRACK_AIRCRAFT_TTL 300000
 
@@ -157,6 +157,11 @@ struct aircraft {
     struct aircraft *next;        // Next aircraft in our linked list
 
     struct modesMessage first_message;  // A copy of the first message we received for this aircraft.
+    
+    
+    double Range;
+    double Elvation;
+    double Azimuth;   // For storing the R A E of the aircraft and send to the webserver.  // dragonyzl 20161012
 };
 
 /* is this bit of data valid? */
@@ -199,5 +204,6 @@ struct aircraft *trackUpdateFromMessage(struct modesMessage *mm);
 
 /* Call periodically */
 void trackPeriodicUpdate();
+void SendUDP(struct aircraft *a);
 
 #endif

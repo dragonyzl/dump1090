@@ -62,6 +62,12 @@
 #define AF_LOCAL AF_UNIX
 #endif
 
+
+#ifdef MINGW32
+#define realpath(N,R) _fullpath((R),(N),_MAX_PATH)
+int inet_aton(const char * cp, DWORD * ulAddr);// { *ulAddr = inet_addr(cp); return (INADDR_NONE != *ulAddr);}
+#endif
+
 int anetTcpConnect(char *err, char *addr, char *service);
 int anetTcpNonBlockConnect(char *err, char *addr, char *service);
 int anetRead(int fd, char *buf, int count);

@@ -51,22 +51,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/un.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
-#include <netdb.h>
-#include <errno.h>
-#include <stdarg.h>
-#include <stdio.h>
 
+#ifndef _WIN32
+  #include <sys/types.h>
+  #include <sys/socket.h>
+  #include <sys/stat.h>
+  #include <sys/un.h>
+  #include <netinet/in.h>
+  #include <netinet/tcp.h>
+  #include <arpa/inet.h>
+  #include <unistd.h>
+  #include <fcntl.h>
+  #include <string.h>
+  #include <netdb.h>
+  #include <errno.h>
+  #include <stdarg.h>
+  #include <stdio.h>
+ #else
+  #include "winstubs.h" //Put everything Windows specific in here
+#endif
+
+#include "dump1090.h"
 #include "anet.h"
+
+
+#ifdef MINGW32
+int inet_aton(const char * cp, DWORD * ulAddr) { *ulAddr = inet_addr(cp); return (INADDR_NONE != *ulAddr);}
+#endif
+
 
 static void anetSetError(char *err, const char *fmt, ...)
 {
@@ -81,7 +93,7 @@ static void anetSetError(char *err, const char *fmt, ...)
 int anetNonBlock(char *err, int fd)
 {
     int flags;
-
+#ifndef _WIN32
     /* Set the socket nonblocking.
      * Note that fcntl(2) for F_GETFL and F_SETFL can't be
      * interrupted by a signal. */
@@ -93,7 +105,14 @@ int anetNonBlock(char *err, int fd)
         anetSetError(err, "fcntl(F_SETFL,O_NONBLOCK): %s", strerror(errno));
         return ANET_ERR;
     }
-
+#else
+    flags = 1;
+    if (ioctlsocket(fd, FIONBIO, &flags)) {
+        errno = WSAGetLastError();
+        anetSetError(err, "ioctlsocket(FIONBIO): %s", strerror(errno));
+        return ANET_ERR;
+    }
+#endif
     return ANET_OK;
 }
 
@@ -128,10 +147,31 @@ int anetTcpKeepAlive(char *err, int fd)
     return ANET_OK;
 }
 
-static int anetCreateSocket(char *err, int domain)
+int anetResolve(char *err, char *host, char *ipbuf)
 {
+    struct sockaddr_in sa;
+
+    sa.sin_family = AF_INET;
+    if (inet_aton(host, (void*)&sa.sin_addr) == 0) {
+        struct hostent *he;
+
+        he = gethostbyname(host);
+        if (he == NULL) {
+            anetSetError(err, "can't resolve: %s", host);
+            return ANET_ERR;
+        }
+        memcpy(&sa.sin_addr, he->h_addr, sizeof(struct in_addr));
+    }
+    strcpy(ipbuf,inet_ntoa(sa.sin_addr));
+    return ANET_OK;
+}
+
+static int anetCreateSocket(char *err, int domain) {
     int s, on = 1;
     if ((s = socket(domain, SOCK_STREAM, 0)) == -1) {
+#ifdef _WIN32
+        errno = WSAGetLastError();
+#endif
         anetSetError(err, "creating socket: %s", strerror(errno));
         return ANET_ERR;
     }
@@ -237,12 +277,17 @@ int anetWrite(int fd, char *buf, int count)
 }
 
 static int anetListen(char *err, int s, struct sockaddr *sa, socklen_t len) {
-    if (sa->sa_family == AF_INET6) {
+#ifndef _WIN32
+	if (sa->sa_family == AF_INET6) {
         int on = 1;
         setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on));
     }
+#endif
 
     if (bind(s,sa,len) == -1) {
+#ifdef _WIN32
+        errno = WSAGetLastError();
+#endif
         anetSetError(err, "bind: %s", strerror(errno));
         close(s);
         return ANET_ERR;
@@ -252,6 +297,9 @@ static int anetListen(char *err, int s, struct sockaddr *sa, socklen_t len) {
      * the kernel does: backlogsize = roundup_pow_of_two(backlogsize + 1);
      * which will thus give us a backlog of 512 entries */
     if (listen(s, 511) == -1) {
+#ifdef _WIN32
+        errno = WSAGetLastError();
+#endif
         anetSetError(err, "listen: %s", strerror(errno));
         close(s);
         return ANET_ERR;
@@ -303,8 +351,13 @@ static int anetGenericAccept(char *err, int s, struct sockaddr *sa, socklen_t *l
     while(1) {
         fd = accept(s,sa,len);
         if (fd == -1) {
+#ifndef _WIN32
             if (errno == EINTR) {
                 continue;
+#else
+            errno = WSAGetLastError();
+            if (errno == WSAEWOULDBLOCK) {
+#endif
             } else {
                 anetSetError(err, "accept: %s", strerror(errno));
             }

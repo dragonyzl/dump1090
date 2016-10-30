@@ -17,6 +17,8 @@ function PlaneObject(icao) {
         this.position  = null;
         this.position_from_mlat = false
         this.sitedist  = null;
+	this.Az        = null;
+	this.El        = null;  // Dragonyzl add this two vars
 
 	// Data packet numbers
 	this.messages  = null;
@@ -359,8 +361,11 @@ PlaneObject.prototype.updateData = function(receiver_timestamp, data) {
                 this.last_position_time = receiver_timestamp - data.seen_pos;
 
                 if (SitePosition !== null) {
-                        var WGS84 = new ol.Sphere(6378137);
-                        this.sitedist = WGS84.haversineDistance(SitePosition, this.position);
+                        //var WGS84 = new ol.Sphere(6378137);
+                        //this.sitedist = WGS84.haversineDistance(SitePosition, this.position);
+                        this.sitedist = data.siteRange;   // Dragonyzl removed the above two lines and assign the sitedist directly.
+						this.Az = data.Az;
+						this.El = data.El;
                 }
 
                 this.position_from_mlat = false;

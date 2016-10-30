@@ -47,9 +47,9 @@
 //   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <rtl-sdr.h>
 #include "dump1090.h"
 
-#include <rtl-sdr.h>
 
 #include <stdarg.h>
 
@@ -87,6 +87,7 @@ static void sigintHandler(int dummy) {
     signal(SIGINT, SIG_DFL);  // reset signal handler - bit extra safety
     Modes.exit = 1;           // Signal to threads that we are done
     log_with_timestamp("Caught SIGINT, shutting down..\n");
+	if(Modes.RecordFile) fclose(Modes.RecordFile);  // Close the record file. Dragonyzl 20161028
 }
 
 static void sigtermHandler(int dummy) {
@@ -94,6 +95,7 @@ static void sigtermHandler(int dummy) {
     signal(SIGTERM, SIG_DFL); // reset signal handler - bit extra safety
     Modes.exit = 1;           // Signal to threads that we are done
     log_with_timestamp("Caught SIGTERM, shutting down..\n");
+	if(Modes.RecordFile) fclose(Modes.RecordFile);  // Close the record file. Dragonyzl 20161028
 }
 //
 // =============================== Terminal handling ========================
@@ -159,6 +161,23 @@ void modesInitConfig(void) {
     Modes.json_interval           = 1000;
     Modes.json_location_accuracy  = 1;
     Modes.maxRange                = 1852 * 300; // 300NM default max range
+
+   // Dragon Yang 20150510
+  Modes.fUserLat = 32.053570;
+  Modes.fUserLon = 118.728302;
+  Modes.fUserHeight = 31.0;    // Here is Dragon Yang's Home at Nanjing.  ^_^
+  Modes.Range_max = 3000000.;	// 300km
+  Modes.Range_min = 1000.;
+  Modes.El_Start  = 0.0;
+  Modes.El_Stop   = 90.0;
+  Modes.Az_Start  =0.0;
+  Modes.Az_Stop   =360.0;
+  Modes.metric = 1;		// default to the metric
+  Modes.SortBy = 0;   //default sort by range 
+
+  Modes.TimeIndex =mstime();
+  Modes.RecordFlag = 0;		// Controled by pathname  Dragon Yang
+
 }
 //
 //=========================================================================
@@ -696,8 +715,21 @@ void showHelp(void) {
 "--net-buffer <n>         TCP buffer size 64Kb * (2^n) (default: n=0, 64Kb)\n"
 "--net-verbatim           Do not apply CRC corrections to messages we forward; send unchanged\n"
 "--forward-mlat           Allow forwarding of received mlat results to output ports\n"
+"--udp-mcast-ip          ip address to multicast the airplane's info\n"
+"--udp-mcast-port      ip port to udp-multicast the airplane's info\n"
+"--udp-my-ip               my ip address to for multicasting the airplane's info\n(Default is IP of the host)"
+"--udp-my-port          my port for address to multicast the airplane's info\n"
 "--lat <latitude>         Reference/receiver latitude for surface posn (opt)\n"
 "--lon <longitude>        Reference/receiver longitude for surface posn (opt)\n"
+"--height <height>        Reference/receiver height for surface posn (opt)\n"
+"--pathname <pathname>    Record the aircrafts' A E R to the <pathname> directory\n"	// Dragon Yang 20150510
+"--r_max <in km>		  set max plane range for display\n"	// Dragon Yang 20150510
+"--r_min <in km>		  set min plane range for display\n"	// Dragon Yang 20150510
+"--az_start <in degree>   set min plane Az(default 0 degree) \n"	// Dragon Yang 20150510
+"--az_stop <in degree>    set max plane Az(default 360 degree)\n"	// Dragon Yang 20150510
+"--el_start <in degree>   set min plane El Start(default 0 degree)\n"	// Dragon Yang 20150510
+"--el_stop <in degree>    set min plane El Stop (default 90 degree)\n"	// Dragon Yang 20150510
+"--sort <0 1 2>           set the sort type,0->byRange, 1->byAzimuth,2->byElevation, default sort by range      \n"	// Dragon Yang 20150510
 "--max-range <distance>   Absolute maximum range for position decoding (in nm, default: 300)\n"
 "--fix                    Enable single-bits error correction using CRC\n"
 "--no-fix                 Disable single-bits error correction using CRC\n"
@@ -1014,6 +1046,35 @@ int main(int argc, char **argv) {
             Modes.net_verbatim = 1;
         } else if (!strcmp(argv[j],"--forward-mlat")) {
             Modes.forward_mlat = 1;
+//================================   Start of UDP settings=====================================
+/*
+"--udp-mcast-ip          ip address to multicast the airplane's info\n"
+"--udp-mcast-port      ip port to udp-multicast the airplane's info\n"
+"--udp-my-ip               my ip address to for multicasting the airplane's info\n"
+"--udp-my-port          my port for address to multicast the airplane's info\n"
+*/
+        } else if (!strcmp(argv[j],"--udp-mcast-ip")) {
+		Modes.sockfd = socket (AF_INET, SOCK_DGRAM, 0);
+		if (Modes.sockfd < 0) {      printf ("socket creating error/n");      exit (1);    }
+		int socklen = sizeof (struct sockaddr_in);
+		/* 设置对方的端口和IP信息 */
+		memset (&Modes.peeraddr, 0, socklen);
+		Modes.peeraddr.sin_family = AF_INET;
+		 if (inet_pton (AF_INET, argv[++j], &Modes.peeraddr.sin_addr) <= 0)	{  printf ("wrong group address!/n");  exit (0);}
+	} else if (!strcmp(argv[j],"--udp-mcast-port")) {
+		Modes.peeraddr.sin_port = htons (atoi (argv[++j]));
+	} else if (!strcmp(argv[j],"--udp-my-ip")) {
+		/* 设置自己的端口和IP信息 */
+		  int socklen = sizeof (struct sockaddr_in);
+		  memset (&Modes.myaddr, 0, socklen);
+		  Modes.myaddr.sin_family = AF_INET;
+         	  if (inet_pton (AF_INET, argv[++j], &Modes.myaddr.sin_addr) <= 0)	
+			{	  printf ("self ip address error!/n");	  exit (0);	}
+		  else Modes.myaddr.sin_addr.s_addr = INADDR_ANY;
+	} else if (!strcmp(argv[j],"--udp-my-port")) {
+		Modes.myaddr.sin_port = htons (atoi (argv[++j]));
+		if (bind (Modes.sockfd, (struct sockaddr *) &Modes.myaddr, sizeof (struct sockaddr_in)) == -1)    {      printf ("Bind error/n");      exit (0);    }//====  Dragonyzl 20161029         UDP initialize
+//================================   End of UDP settings=====================================
         } else if (!strcmp(argv[j],"--onlyaddr")) {
             Modes.onlyaddr = 1;
         } else if (!strcmp(argv[j],"--metric")) {
@@ -1040,6 +1101,25 @@ int main(int argc, char **argv) {
             Modes.fUserLon = atof(argv[++j]);
         } else if (!strcmp(argv[j],"--max-range") && more) {
             Modes.maxRange = atof(argv[++j]) * 1852.0; // convert to metres
+	} else if (!strcmp(argv[j],"--height") && more) {
+            Modes.fUserHeight = atof(argv[++j]);
+             } else if (!strcmp(argv[j],"--r_max") && more) {
+            Modes.Range_max = atof(argv[++j]) * 1000.;
+			Modes.maxRange = Modes.Range_max; 
+            } else if (!strcmp(argv[j],"--r_min") && more) {
+            Modes.Range_min = atof(argv[++j]) * 1000.;
+	    } else if (!strcmp(argv[j],"--az_start") && more) {
+            Modes.Az_Start = atof(argv[++j]) ;
+            } else if (!strcmp(argv[j],"--az_stop") && more) {
+            Modes.Az_Stop = atof(argv[++j]);
+			 } else if (!strcmp(argv[j],"--sort") && more) {
+            Modes.SortBy = (atoi(argv[++j])%3);
+            } else if (!strcmp(argv[j],"--el_start") && more) {
+            Modes.El_Start = atof(argv[++j]) ;
+            } else if (!strcmp(argv[j],"--el_stop") && more) {
+            Modes.El_Stop = atof(argv[++j]);
+            } else if (!strcmp(argv[j],"--pathname") && more) {
+            strcpy(Modes.pathname , (argv[++j]) ); Modes.RecordFlag=1;
         } else if (!strcmp(argv[j],"--debug") && more) {
             char *f = argv[++j];
             while(*f) {
@@ -1105,6 +1185,8 @@ int main(int argc, char **argv) {
         }
     }
 
+	if(Modes.RecordFlag==1)
+	  setRecordFileNamePrefix();
 #ifdef _WIN32
     // Try to comply with the Copyright license conditions for binary distribution
     if (!Modes.quiet) {showCopyright();}

@@ -48,9 +48,10 @@
 //   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "util.h"
-
+#include <time.h>
 #include <stdlib.h>
 #include <sys/time.h>
+
 
 uint64_t mstime(void)
 {
