@@ -84,7 +84,7 @@ void interactiveShowData(void) {
     int count = 0;
     char progress;
     char spinner[4] = "|/-\\";
-    double ELLIPSOID[2] = { 6.378137e6, 8.181919084262149e-02 };
+//    double ELLIPSOID[2] = { 6.378137e6, 8.181919084262149e-02 };
     //uint64_t now_ms = mstime();
    //   double A,E,R;
     // Refresh screen every (MODES_INTERACTIVE_REFRESH_TIME) miliseconde
@@ -258,8 +258,8 @@ printf    ("Hex       Az           El       R(km)    Seen%c  Lat        Lon     
 			  printf  (  "%06X  %10s %11s %7s %4s %10s %11s %5s  %-8s %10.1f\n",
 				               a->addr, strAz,strEl, strR, strSeen, strLat, strLon, strTt, a->callsign,DopplerAt1G);
 #else
-			  printf  (  "%06X %5s %10s %11s %7s %4s %10s %10s %11s %7s %5s  %-8s  %10.1f\n",
-				               a->addr, strGs, strLat, strLon, strFl, strSeen,strTimeSeen, strAz,strEl, strR,strTt, a->callsign,DopplerAt1G);
+			  printf  (  "%06X %5s %10s %11s %7s %4s %10s %10s %11s %7s %5s  %-8s  %10.1f\t %6.1fdB \n",
+				               a->addr, strGs, strLat, strLon, strFl, strSeen,strTimeSeen, strAz,strEl, strR,strTt, a->callsign,DopplerAt1G,10*log10(signalAverage));
 #endif // ANDRIOD_PHONE
 
 			   if (Modes.RecordFile && Modes.RecordFlag)

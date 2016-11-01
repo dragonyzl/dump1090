@@ -829,8 +829,14 @@ void trackPeriodicUpdate()
 void SendUDP(struct aircraft *a)
 {
 	char recmsg[MODES_OUT_BUF_SIZE];
-	uint64_t now = mstime();
+	//uint64_t now = mstime();
 	memset(recmsg,0,strlen(recmsg));
-	sprintf(recmsg,"%06x\t%d\t%7.3f\t%7.3f\t%10.3f\n",a->addr,now, a->Azimuth,a->Elvation,a->Range/1000.);
-	if (sendto  (Modes.sockfd, recmsg, strlen (recmsg), 0,   (struct sockaddr *) &Modes.peeraddr, sizeof (struct sockaddr_in)) < 0)	{	  printf ("sendto error!/n");	  exit (3);	}
+	// TODO: using selectedAddr to control the UDP cast of single plane
+	//if(Modes.selectedAddr == a->addr)
+	sprintf(recmsg,"%06x\t%d\t%7.3f\t%7.3f\t%10.3f\n",a->addr,a->seen, a->Azimuth,a->Elvation,a->Range/1000.);
+	if (sendto(Modes.sockfd,recmsg,strlen(recmsg),0,(struct sockaddr *)&Modes.peeraddr,sizeof(struct sockaddr_in))<0)
+	{	  printf ("sendto error!/n");	  exit (3);	}
+
+	
+
 }

@@ -383,6 +383,7 @@ struct {                             // Internal state
     double maxRange;                // Absolute maximum decoding range, in *metres*
 	int sockfd;   // using udp mutlticast to send the airplane's RAE to the local network. Dragonyzl 20161029
 	struct sockaddr_in peeraddr, myaddr;
+	uint32_t selectedAddr; // for stroing the selected plane addr to control the UDP cast the single plane's info
 
 	
 
