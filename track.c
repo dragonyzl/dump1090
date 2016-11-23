@@ -517,7 +517,16 @@ static void updatePosition(struct aircraft *a, struct modesMessage *mm, uint64_t
                h = (float)convert_altitude(a->altitude);
 	       elevation (Modes.fUserLat, Modes.fUserLon, Modes.fUserHeight, a->lat, a->lon, h, ELLIPSOID, &(a->Azimuth), &(a->Elvation), &(a->Range) );
 		   //  TODO: Send the aircraft info using UDP Multicast. Dragonyzl 20161029
-			if(Modes.net)   SendUDP(a);
+		   char ss[10];strcpy(ss,"");
+		   sprintf(ss,"%06x",a->addr);
+		   if(Modes.net)
+		   {
+			   if(strlen(Modes.selectedAddr) >5 &&  strcmp(Modes.selectedAddr,ss)==0 )
+			   {
+				   SendUDP(a);
+			   }
+		   }
+
 	       }
 	// obtain the a->Range, a->Azimuth, a->Elvation. //  Dragonyzl 20161014
 

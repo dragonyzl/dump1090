@@ -36,4 +36,12 @@ iq_convert_fn init_converter(input_format_t format,
 
 void cleanup_converter(struct converter_state *state);
 
+#if 0
+unsigned char Char2Hex(const char C);
+String2Hex(const char* str, unsigned char *buf, unsigned int *len);
+
+int HexString2Int(char* ch, unsigned long int* digital);
+
+#endif
+
 #endif

@@ -69,7 +69,10 @@ int main(int argc, char *argv[])
 			perror("recvfrom");
 			exit(1);
 		}
-		puts(msgbuf);
+		printf("%s",msgbuf);
+		fflush(NULL); // refresh the all stream opened
+		//puts(msgbuf);
+
 	}
 
 	return 0;

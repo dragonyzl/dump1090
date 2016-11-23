@@ -283,3 +283,85 @@ void cleanup_converter(struct converter_state *state)
 {
     free(state);
 }
+
+#if 0
+unsigned char Char2Hex(const char C)
+{
+	unsigned char Data;
+	if (C >= '0' && C <= '9')
+	  {
+		  Data = C - '0';
+	 }
+	else if (C >= 'A' && C <= 'Z')
+	  {
+		  Data = C - 'A' + 10;
+	  }
+	else if (C >= 'a' && C <= 'z')
+	{
+		Data = C - 'a' + 10;
+	}
+	return Data;
+}
+
+String2Hex(const char* str, unsigned char *buf, unsigned int &len)
+{
+	unsigned char OneData = 0;
+	len = 0;
+	int ChL = 0;
+	for (int i = 0; i < strlen(str); i++)
+	{
+		char C = static_cast<char>(str[i]);
+		if (C == ' ')		
+		{
+			if (ChL != 0)
+			{
+				buf[len++] = OneData;
+				ChL = 0;
+			}
+			continue;
+		}
+		OneData <<= 4;
+		OneData += Char2Hex(C); 
+		ChL++;
+		if (ChL == 2)
+		{
+			buf[len++] = OneData;
+			ChL = 0;
+		}
+	}
+}
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+
+#include "convert.h"
+
+int HexString2Int( char* ch, unsigned long int* digital)
+{
+	 long int  len, times;
+	 // char ch[50];
+	   //while (1)
+	//	  {
+		//   fputs("请输入一个十六进制数字 <#退出> : ", stdout);
+		//  gets(ch);
+		for (times = 1, len = strlen(ch) - 1, digital = 0; len >= 0; --len)
+		{
+			ch[len] = tolower(ch[len]);
+			if (ch[len] >= 'a' && ch[len] <= 'f')
+			  digital += (ch[len] - 87) * times;
+			else if (isdigit(ch[len]))
+			  digital += (ch[len] - 48) * times;
+			else
+			{
+				break;
+			}
+			times *= 16;
+		} 
+	//	  }
+	    return 0;
+
+}
+
+#endif

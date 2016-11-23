@@ -49,7 +49,9 @@
 
 #include "dump1090.h"
 #include "interactive.h"
+#include "convert.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 //
 //========================= Interactive mode ===============================
@@ -139,6 +141,25 @@ void interactiveShowData(void) {
      InterCurrentTime_p->tm_hour, InterCurrentTime_p->tm_min, InterCurrentTime_p->tm_sec,
      Modes.fUserLat, Modes.fUserLon, Modes.fUserHeight,
      Modes.Range_min / 1000., Modes.Range_max / 1000.,Modes.Az_Start, Modes.Az_Stop,Modes.El_Start,Modes.El_Stop );
+
+	//read the selected file peroidcally
+#if 1
+	FILE *fd;
+	fd = fopen( Modes.SelectedFileName,"r");
+	{
+		fscanf(fd,"%s",Modes.selectedAddr);
+		fclose(fd);
+	//	printf("%d\t%06x",fd, Modes.selectedAddr);
+		//exit(0);
+	}
+
+#endif
+
+	 printf("Selected Addr:%s\n",Modes.selectedAddr);
+
+
+  //Modes.selectedAddr = tmp;
+
 #ifndef ANDROID_PHONE
 printf    ("Hex     Speed   Lat        Lon          Alt. Seen%c    Time    Az            El      R(km)   Trk.    Flight  Fd@1GHz \n  ",progress);
   printf  ("---------------------------------------------------------------------------------------------------------------------\n");
@@ -148,6 +169,17 @@ printf    ("Hex       Az           El       R(km)    Seen%c  Lat        Lon     
 #endif
     while(a && (count < Modes.interactive_rows)) {
 
+#if 0
+		char ss[10];
+ if(a)
+ {
+	 sprintf(ss,"%06x",a->addr);
+	 if(strcoll(ss,Modes.selectedAddr)==0 )
+	   printf("\t Equal Addr:%s",ss);
+
+	 printf("\n");
+ }
+#endif
         if ((now - a->seen) < Modes.interactive_display_ttl)
             {
             int msgs  = a->messages;

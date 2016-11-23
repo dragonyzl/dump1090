@@ -174,6 +174,8 @@ void modesInitConfig(void) {
   Modes.Az_Stop   =360.0;
   Modes.metric = 1;		// default to the metric
   Modes.SortBy = 0;   //default sort by range 
+  strcpy(Modes.SelectedFileName,"");
+//  Modes.selectedAddr = 0;
 
   Modes.TimeIndex =mstime();
   Modes.RecordFlag = 0;		// Controled by pathname  Dragon Yang
@@ -723,6 +725,7 @@ void showHelp(void) {
 "--lon <longitude>        Reference/receiver longitude for surface posn (opt)\n"
 "--height <height>        Reference/receiver height for surface posn (opt)\n"
 "--pathname <pathname>    Record the aircrafts' A E R to the <pathname> directory\n"	// Dragon Yang 20150510
+"--selectfile <filename>  set the filename for storing the addr of selected plane through web browser\n"	// Dragon Yang 20150510
 "--r_max <in km>		  set max plane range for display\n"	// Dragon Yang 20150510
 "--r_min <in km>		  set min plane range for display\n"	// Dragon Yang 20150510
 "--az_start <in degree>   set min plane Az(default 0 degree) \n"	// Dragon Yang 20150510
@@ -799,7 +802,14 @@ void backgroundTasks(void) {
     // Refresh screen when in interactive mode
     if (Modes.interactive) {
         interactiveShowData();
+
     }
+
+	//if(Modes.selectedAddr)
+	
+	
+
+
 
     // always update end time so it is current when requests arrive
     Modes.stats_current.end = now;
@@ -1120,6 +1130,8 @@ int main(int argc, char **argv) {
             Modes.El_Stop = atof(argv[++j]);
             } else if (!strcmp(argv[j],"--pathname") && more) {
             strcpy(Modes.pathname , (argv[++j]) ); Modes.RecordFlag=1;
+            } else if (!strcmp(argv[j],"--selectedfile") && more) {
+            strcpy(Modes.SelectedFileName , (argv[++j]) ); strcpy(Modes.selectedAddr,"");  // init the selected addr to "" and changed by brower
         } else if (!strcmp(argv[j],"--debug") && more) {
             char *f = argv[++j];
             while(*f) {

@@ -899,12 +899,13 @@ function sortBy(id,sc,se) {
 }
 
 function selectPlaneByHex(hex,autofollow) {
-        //console.log("select: " + hex);
+       //console.log("select: " + hex);
 	// If SelectedPlane has something in it, clear out the selected
 	if (SelectedPlane != null) {
 		Planes[SelectedPlane].selected = false;
 		Planes[SelectedPlane].clearLines();
 		Planes[SelectedPlane].updateMarker();
+
                 $(Planes[SelectedPlane].tr).removeClass("selected");
 	}
 
@@ -915,7 +916,11 @@ function selectPlaneByHex(hex,autofollow) {
         }
 
         if (hex !== null) {
-		// Assign the new selected
+			// Assign the new selected
+			// And save the selected hex addr to the file named "selected.txt"  Dragonyzl 20161109
+			var blob =new Blob([hex],{type: "text/plain" });// NOTICE, NOT assign charset. 
+			saveAs(blob,"select.txt");
+
 		SelectedPlane = hex;
 		Planes[SelectedPlane].selected = true;
 		Planes[SelectedPlane].updateLines();
@@ -923,6 +928,8 @@ function selectPlaneByHex(hex,autofollow) {
                 $(Planes[SelectedPlane].tr).addClass("selected");
 	} else { 
 		SelectedPlane = null;
+		var blob =new Blob([ ],{type: "text/plain" });// NOTICE, DON'T assgin the charset, otherwise the strcmp in dump1090 will error
+		saveAs(blob,"select.txt");
 	}
 
         if (SelectedPlane !== null && autofollow) {

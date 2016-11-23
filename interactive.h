@@ -32,6 +32,7 @@
 #define INTERACTIVE_H
 #include "dump1090.h"
 #include "AER.h"
+#include "convert.h"
 //
 //========================= Interactive mode ===============================
 
